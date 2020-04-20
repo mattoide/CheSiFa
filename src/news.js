@@ -1,71 +1,188 @@
+/*Example of React Native Video*/
 import React, { Component } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { FlatGrid } from 'react-native-super-grid';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+//Import React
+import { Platform, StyleSheet, Text, View } from 'react-native';
+//Import Basic React Native Component
+import Video from 'react-native-video';
+//Import React Native Video to play video
+import MediaControls, { PLAYER_STATES } from 'react-native-media-controls';
+import { apiUrls } from '../App';
+//Media Controls to control Play/Pause/Seek and full screen
+import fetchTimeout from 'fetch-timeout';
 
-import VideoPlayer from 'react-native-video-player';
 
-const VIMEO_ID = '179859217';
+export default class News extends Component {
+  videoPlayer;
 
-
-
-export default class Example extends Component {
-
-  constructor() {
-    super();
-
+  constructor(props) {
+    super(props);
     this.state = {
-      video: { width: undefined, height: undefined, duration: undefined },
-      thumbnailUrl: undefined,
-      videoUrl: undefined,
+      currentTime: 0,
+      duration: 0,
+      isFullScreen: false,
+      isLoading: true,
+      paused: false,
+      playerState: PLAYER_STATES.PLAYING,
+      screenType: 'content',
+      base:'data:video/mp4;base64,',
+      url: ''
     };
   }
-  componentDidMount() {
 
+  componentDidMount(){
+    this.getInviti(apiUrls.getInviti, function(res, err, context){
+      if(res){
+
+
+
+      }
+
+              let a =  context.state.base + err[0].video
+              context.setState({url:a})
+      console.log(err)
+    })
+  
   }
 
+  
+
+  getInviti(url, callback) {
+
+
+    fetchTimeout(url, {
+      method: 'POST',
+
+      headers: { 
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({ invito: this.state.invito })
+      // body: formData
+
+
+
+    }, 5000, 'Il server non risponde')
+      .then(res => {
+        if (res.status !== 200) {
+          throw new Error('Status code not OK', res.status);
+        } else {
+          return res.json();
+        }
+      })
+      .then(json => {
+        callback(null, json, this);
+      })
+      .catch(err => {
+        console.log("error", err);
+      });
+  }
+  onSeek = seek => {
+    //Handler for change in seekbar
+    this.videoPlayer.seek(seek);
+  };
+
+  onPaused = playerState => {
+    //Handler for Video Pause
+    this.setState({
+      paused: !this.state.paused,
+      playerState,
+    });
+  };
+
+  onReplay = () => {
+    //Handler for Replay
+    this.setState({ playerState: PLAYER_STATES.PLAYING });
+    this.videoPlayer.seek(0);
+  };
+
+  onProgress = data => {
+    const { isLoading, playerState } = this.state;
+    // Video Player will continue progress even if the video already ended
+    if (!isLoading && playerState !== PLAYER_STATES.ENDED) {
+      this.setState({ currentTime: data.currentTime });
+    }
+  };
+  
+  onLoad = data => this.setState({ duration: data.duration, isLoading: false });
+  
+  onLoadStart = data => this.setState({ isLoading: true });
+  
+  onEnd = () => this.setState({ playerState: PLAYER_STATES.ENDED });
+  
+  onError = () => alert('Oh! ', error);
+  
+  exitFullScreen = () => {
+    alert('Exit full screen');
+  };
+  
+  enterFullScreen = () => {};
+  
+  onFullScreen = () => {
+    if (this.state.screenType == 'content')
+      this.setState({ screenType: 'cover' });
+    else this.setState({ screenType: 'content' });
+  };
+  renderToolbar = () => (
+    <View>
+      <Text> toolbar </Text>
+    </View>
+  );
+  onSeeking = currentTime => this.setState({ currentTime });
+
   render() {
-
-
     return (
-      <View style={styles.mainView}>
-          <View style={styles.button}>
-            <TouchableOpacity
-              onPress={console.log()}>
+      <View style={styles.container}>
+        <Video
+          onEnd={this.onEnd}
+          onLoad={this.onLoad}
+          onLoadStart={this.onLoadStart}
+          onProgress={this.onProgress}
+          paused={this.state.paused}
+          ref={videoPlayer => (this.videoPlayer = videoPlayer)}
+          resizeMode={this.state.screenType}
+          onFullScreen={this.state.isFullScreen}
+          // source={{ uri: 'http://techslides.com/demos/sample-videos/small.mp4' }}
+          source={{ uri: this.state.url }}
 
-              <View style={styles.itemContainer}>
-                <MaterialIcons name='people-outline' size={50} />
-                <Text style={styles.itemName}>Invita</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          
+          style={styles.mediaPlayer}
+          volume={10}
+        />
+        <MediaControls
+          duration={this.state.duration}
+          isLoading={this.state.isLoading}
+          mainColor="#333"
+          onFullScreen={this.onFullScreen}
+          onPaused={this.onPaused}
+          onReplay={this.onReplay}
+          onSeek={this.onSeek}
+          onSeeking={this.onSeeking}
+          playerState={this.state.playerState}
+          progress={this.state.currentTime}
+          toolbar={this.renderToolbar()}
+        />
       </View>
-
     );
   }
 }
-
 const styles = StyleSheet.create({
-  itemContainer: {
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 5,
-    padding: 0,
-    height: 150,
-    backgroundColor: 'gray',
-
-  },
-  itemName: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  mainView: {
+  container: {
     flex: 1,
-    backgroundColor:'#121212'
-    },
-    button:{
-        
-    }
+  },
+  toolbar: {
+    marginTop: 30,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+  },
+  mediaPlayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'black',
+  },
 });
+

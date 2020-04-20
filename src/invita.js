@@ -118,6 +118,7 @@ export default class Example extends Component {
 
           let invito = this.state.invito
           invito.base64 = res;
+          invito.utente = "username"
           this.setState({invito: invito})
 
           this.aggiungiInvito(apiUrls.aggiungiInvito, function(res, err){

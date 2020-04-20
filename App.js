@@ -16,7 +16,8 @@ const baseUrl = "http://192.168.1.31:3000/";
 
 export const apiUrls = {
   getInviti: baseUrl + 'utenti/getInviti',
-  aggiungiInvito: baseUrl + 'utenti/aggiungiInvito'
+  aggiungiInvito: baseUrl + 'utenti/caricaInvito',
+  getInviti: baseUrl + 'utenti/getInviti'
 }
 
 function DetailsScreen() {
@@ -57,7 +58,7 @@ function App() {
           
           }}>
             
-      <Tab.Screen name="News" component={DetailsScreen} options={{ tabBarIcon: () => (
+      <Tab.Screen name="News" component={News} options={{ tabBarIcon: () => (
             <Ionicons name="ios-people" color={'gray'} size={30}/>
           ),}} />
 
